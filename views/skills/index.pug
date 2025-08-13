@@ -1,0 +1,70 @@
+extends ../layout.pug
+
+block content
+  .page-head
+    h1.h1 Skills
+    .actions
+      input.input(type='text', placeholder='Filter skills…', data-filter)
+
+  .card
+    table.table
+      thead
+        tr
+          th Name
+          th Level
+          th %
+          th Icon
+          th Updated
+          th Actions
+      tbody
+        // ADD ROW
+        tr
+          td(colspan='6')
+            form.rowform(method='POST', action='/skills')
+              input.input(type='text', name='name', placeholder='Skill name *', required)
+              select.input(name='level')
+                option(value='Beginner') Beginner
+                option(value='Intermediate' selected) Intermediate
+                option(value='Advanced') Advanced
+                option(value='Expert') Expert
+              input.input(type='number', name='percent', min='0', max='100', placeholder='Percent (0–100)')
+              input.input(type='url', name='iconUrl', placeholder='Icon URL (optional)')
+              button.button(type='submit') + Add
+
+        // EXISTING ROWS
+        if skills && skills.length
+          each s in skills
+            if editId && editId == String(s._id)
+              tr
+                td(colspan='6')
+                  form.rowform(method='POST', action=`/skills/${s._id}?_method=PUT`)
+                    input.input(type='text', name='name', required, value=s.name, placeholder='Skill name *')
+                    select.input(name='level')
+                      - const levels = ['Beginner','Intermediate','Advanced','Expert']
+                      each l in levels
+                        option(value=l selected=(s.level===l))= l
+                    input.input(type='number', name='percent', min='0', max='100', value=s.percent, placeholder='Percent (0–100)')
+                    input.input(type='url', name='iconUrl', value=s.iconUrl, placeholder='Icon URL')
+                    .rowactions
+                      button.button(type='submit') Save
+                      a.badge(href='/skills') Cancel
+            else
+              tr(data-row)
+                td
+                  strong= s.name
+                td= s.level || '—'
+                td= (typeof s.percent === 'number' ? s.percent : '—')
+                td
+                  if s.iconUrl
+                    img.icon(src=s.iconUrl, alt=s.name)
+                  else
+                    | —
+                td= (s.updatedAt && s.updatedAt.toLocaleString && s.updatedAt.toLocaleString()) || '—'
+                td
+                  a.badge(href=`/skills?edit=${s._id}`) Edit
+                  form.inline(method='POST', action=`/skills/${s._id}?_method=DELETE`)
+                    button.badge(type='submit') Delete
+        else
+          tr
+            td(colspan='6')
+              .empty No skills yet. Add one above.

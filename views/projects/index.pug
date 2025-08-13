@@ -1,0 +1,76 @@
+extends ../layout.pug
+
+block content
+  .page-head
+    h1.h1 Projects
+    .actions
+      input.input(type='text', placeholder='Filter projects…', data-filter)
+
+  // ADD ROW (full-width form styled to look like a row)
+  .card
+    table.table
+      thead
+        tr
+          th Title
+          th Description
+          th Tech
+          th Links
+          th Updated
+          th Actions
+      tbody
+        tr
+          td(colspan='6')
+            form.rowform(method='POST', action='/projects')
+              input.input(type='text', name='title', placeholder='Project title *', required)
+              input.input(type='text', name='description', placeholder='Short description')
+              input.input(type='text', name='technologies', placeholder='Technologies (comma separated)')
+              input.input(type='url', name='url', placeholder='Demo URL (optional)')
+              input.input(type='url', name='github', placeholder='GitHub URL (optional)')
+              input.input(type='url', name='imageUrl', placeholder='Image URL (optional)')
+              button.button(type='submit') + Add
+
+        // EXISTING ROWS
+        if projects && projects.length
+          each p in projects
+            // Inline editor row when ?edit=<id>
+            if editId && editId == String(p._id)
+              tr
+                td(colspan='6')
+                  form.rowform(method='POST', action=`/projects/${p._id}?_method=PUT`)
+                    input.input(type='text', name='title', required, value=p.title, placeholder='Project title *')
+                    input.input(type='text', name='description', value=p.description, placeholder='Short description')
+                    input.input(type='text', name='technologies', value=(p.technologies || []).join(', '), placeholder='Tech (comma separated)')
+                    input.input(type='url', name='url', value=p.url, placeholder='Demo URL')
+                    input.input(type='url', name='github', value=p.github, placeholder='GitHub URL')
+                    input.input(type='url', name='imageUrl', value=p.imageUrl, placeholder='Image URL')
+                    .rowactions
+                      button.button(type='submit') Save
+                      a.badge(href='/projects') Cancel
+            else
+              tr(data-row)
+                td
+                  strong= p.title
+                td= p.description || '—'
+                td
+                  if p.technologies && p.technologies.length
+                    each t in p.technologies
+                      span.tag= t
+                  else
+                    | —
+                td
+                  .links-cell
+                    if p.url
+                      a.badge(href=p.url target='_blank' rel='noreferrer') Demo
+                    if p.github
+                      a.badge(href=p.github target='_blank' rel='noreferrer') GitHub
+                    if !p.url && !p.github
+                      | —
+                td= (p.updatedAt && p.updatedAt.toLocaleString && p.updatedAt.toLocaleString()) || '—'
+                td
+                  a.badge(href=`/projects?edit=${p._id}`) Edit
+                  form.inline(method='POST', action=`/projects/${p._id}?_method=DELETE`)
+                    button.badge(type='submit') Delete
+        else
+          tr
+            td(colspan='6')
+              .empty No projects yet. Add one above.
